@@ -8,6 +8,7 @@
 
 import UIKit
 import RealmSwift
+import SwipeCellKit
 
 class CategoryViewController: UITableViewController {
     
@@ -27,6 +28,8 @@ class CategoryViewController: UITableViewController {
         super.viewDidLoad()
         
         loadCategories()
+        
+        tableView.rowHeight = 90.00 // change the height of the row
     }
     
     // MARK: - Table view data source
@@ -35,10 +38,19 @@ class CategoryViewController: UITableViewController {
         return categories?.count ?? 1
     }
     
+    //    override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+    //        let cell = tableView.dequeueReusableCell(withIdentifier: "Cell") as! SwipeTableViewCell
+    //        cell.delegate = self
+    //        return cell
+    //    }
+    
     override func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath)
+        // as! SwipeTableViewCell is from SwipeCellKit library to work with the swipe
+        let cell = tableView.dequeueReusableCell(withIdentifier: "CategoryCell", for: indexPath) as! SwipeTableViewCell
         
         cell.textLabel?.text = categories?[indexPath.row].name ?? "No Category Added"
+        
+        cell.delegate = self // from SwipeCellKit library
         
         return cell
     }
@@ -76,13 +88,13 @@ class CategoryViewController: UITableViewController {
         tableView.reloadData()
     }
     
-   // Load data from Realm
+    // Load data from Realm
     func loadCategories(){
         
         // this pulls out all Categories objects in Realm and store into categories
         // realm.objects(Category.self) returns Results<Category> matching categories type decalred at top
         categories = realm.objects(Category.self)
-
+        
         tableView.reloadData()
     }
     
@@ -116,4 +128,43 @@ class CategoryViewController: UITableViewController {
         
         present(alert,animated: true, completion: nil)
     }
+}
+
+//MARK: - Swipe Cell Delegate Methods from SwipeCellKit library
+extension CategoryViewController: SwipeTableViewCellDelegate {
+    
+    // delegate method from library cocoapod SwipeCellKit
+    func tableView(_ tableView: UITableView, editActionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> [SwipeAction]? {
+        // swipe from right
+        guard orientation == .right else { return nil }
+        
+        // delete action when we swipe and click on Delelte
+        let deleteAction = SwipeAction(style: .destructive, title: "Delete") { action, indexPath in
+            // when clicking on "Delete"
+            // unwrap categories because it's optional
+            if let categoryForDeletion = self.categories?[indexPath.row]{
+                do{
+                    try self.realm.write{
+                        self.realm.delete(categoryForDeletion) // delete this Category from Realm
+                    }
+                }catch{
+                    print("Error deleting this cell: \(error)")
+                }
+                 tableView.reloadData()
+            }
+            
+        }
+        
+        // customize the action appearance
+        deleteAction.image = UIImage(named: "delete-icon")
+        
+        return [deleteAction]
+    }
+    
+//    func tableView(_ tableView: UITableView, editActionsOptionsForRowAt indexPath: IndexPath, for orientation: SwipeActionsOrientation) -> SwipeOptions {
+//        var options = SwipeOptions()
+//        options.expansionStyle = .destructive
+//        return options
+//    }
+    
 }

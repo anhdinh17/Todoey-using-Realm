@@ -23,7 +23,7 @@ class AppDelegate: UIResponder, UIApplicationDelegate {
         
         // create a Realm, just like a Persistent Container in Core Data
         do{
-             let realm = try Realm()
+             _ = try Realm()
         }catch {
             print("Error initializing a realm: \(error)")
         }

@@ -8,6 +8,7 @@
 
 import Foundation
 import RealmSwift
+import SwipeCellKit
 
 // Object is usef for saving into Realm
 class Category: Object {
